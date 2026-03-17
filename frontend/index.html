@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Golf Tracking System</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ================================================================
+       TOP NAV
+  ================================================================ -->
+  <header class="topnav">
+    <div class="topnav__brand">
+      <svg class="topnav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+        <path d="M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>
+      </svg>
+      <span class="topnav__title">Golf<span class="accent">Track</span></span>
+      <span class="topnav__version">v2.0</span>
+    </div>
+
+    <div class="topnav__status">
+      <span id="conn-indicator" class="status-dot status-dot--offline"></span>
+      <span id="conn-label" class="status-label">Connecting…</span>
+      <span class="topnav__session-id">Session: <code id="session-id-display">—</code></span>
+    </div>
+
+    <div class="topnav__actions">
+      <button id="btn-reset" class="btn btn--danger" title="Reset Session">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================================
+       MAIN LAYOUT
+  ================================================================ -->
+  <main class="main-grid">
+
+    <!-- ---- SCORE PANEL ---- -->
+    <section class="panel panel--score" aria-label="Score">
+      <div class="panel__header">
+        <span class="panel__title">Score</span>
+        <span class="panel__badge" id="session-duration">0s</span>
+      </div>
+      <div class="score-display">
+        <div id="score-value" class="score-display__value">0</div>
+        <div class="score-display__label">total points</div>
+      </div>
+    </section>
+
+    <!-- ---- STATS ROW ---- -->
+    <section class="panel panel--stats" aria-label="Statistics">
+      <div class="panel__header"><span class="panel__title">Session Stats</span></div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card__value" id="stat-total">0</div>
+          <div class="stat-card__label">Total Shots</div>
+        </div>
+        <div class="stat-card stat-card--green">
+          <div class="stat-card__value" id="stat-valid">0</div>
+          <div class="stat-card__label">Valid</div>
+        </div>
+        <div class="stat-card stat-card--amber">
+          <div class="stat-card__value" id="stat-mismatch">0</div>
+          <div class="stat-card__label">Mismatch</div>
+        </div>
+        <div class="stat-card stat-card--red">
+          <div class="stat-card__value" id="stat-rejected">0</div>
+          <div class="stat-card__label">Rejected</div>
+        </div>
+        <div class="stat-card stat-card--blue">
+          <div class="stat-card__value" id="stat-accuracy">0%</div>
+          <div class="stat-card__label">Accuracy</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- LAST SHOT ---- -->
+    <section class="panel panel--last-shot" aria-label="Last Shot">
+      <div class="panel__header"><span class="panel__title">Last Shot</span></div>
+      <div class="last-shot" id="last-shot-card">
+        <div class="last-shot__placeholder">No shots yet this session</div>
+      </div>
+    </section>
+
+    <!-- ---- SHOT INPUT ---- -->
+    <section class="panel panel--input" aria-label="Record Shot">
+      <div class="panel__header"><span class="panel__title">Record Shot</span></div>
+      <form id="shot-form" class="shot-form" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="ball-id-input">Ball ID</label>
+          <input
+            id="ball-id-input"
+            class="form-input"
+            type="text"
+            placeholder="e.g. BALL-01"
+            maxlength="20"
+            required
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="zone-select">Zone</label>
+          <select id="zone-select" class="form-input form-select" required>
+            <option value="" disabled selected>Select zone…</option>
+            <option value="fairway">⛳ Fairway</option>
+            <option value="green">🟢 Green</option>
+            <option value="rough">🌿 Rough</option>
+            <option value="bunker">🏖 Bunker</option>
+            <option value="water">💧 Water</option>
+            <option value="out_of_bounds">⛔ Out of Bounds</option>
+          </select>
+        </div>
+
+        <div class="zone-pills" id="zone-pills">
+          <button type="button" class="zone-pill" data-zone="fairway">Fairway</button>
+          <button type="button" class="zone-pill" data-zone="green">Green</button>
+          <button type="button" class="zone-pill" data-zone="rough">Rough</button>
+          <button type="button" class="zone-pill" data-zone="bunker">Bunker</button>
+          <button type="button" class="zone-pill" data-zone="water">Water</button>
+          <button type="button" class="zone-pill" data-zone="out_of_bounds">OOB</button>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn btn--primary btn--full">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M5 12l5 5L19 7"/></svg>
+          Submit Shot
+        </button>
+
+        <div id="form-feedback" class="form-feedback" role="alert" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <!-- ---- AI PANEL ---- -->
+    <section class="panel panel--ai" aria-label="AI Engine Status">
+      <div class="panel__header">
+        <span class="panel__title">AI Engine</span>
+        <span class="panel__badge panel__badge--ai">rule-based-v1.2</span>
+      </div>
+      <div class="ai-status" id="ai-status">
+        <div class="ai-status__row">
+          <span class="ai-status__label">Last confidence</span>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-bar" id="confidence-bar"></div>
+          </div>
+          <span class="ai-status__value" id="confidence-value">—</span>
+        </div>
+        <div class="ai-status__row">
+          <span class="ai-status__label">Last verdict</span>
+          <span class="ai-status__value ai-verdict" id="ai-verdict">—</span>
+        </div>
+        <div class="ai-status__row">
+          <span class="ai-status__label">Notes</span>
+          <span class="ai-status__value ai-notes" id="ai-notes">—</span>
+        </div>
+        <div class="ai-status__row">
+          <span class="ai-status__label">Latency</span>
+          <span class="ai-status__value mono" id="ai-latency">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- ZONE MAP ---- -->
+    <section class="panel panel--zone-map" aria-label="Zone Map">
+      <div class="panel__header"><span class="panel__title">Zone Activity</span></div>
+      <div class="zone-map" id="zone-map">
+        <div class="zone-tile" data-zone="green">
+          <div class="zone-tile__name">Green</div>
+          <div class="zone-tile__count" id="zm-green">0</div>
+        </div>
+        <div class="zone-tile" data-zone="fairway">
+          <div class="zone-tile__name">Fairway</div>
+          <div class="zone-tile__count" id="zm-fairway">0</div>
+        </div>
+        <div class="zone-tile" data-zone="rough">
+          <div class="zone-tile__name">Rough</div>
+          <div class="zone-tile__count" id="zm-rough">0</div>
+        </div>
+        <div class="zone-tile" data-zone="bunker">
+          <div class="zone-tile__name">Bunker</div>
+          <div class="zone-tile__count" id="zm-bunker">0</div>
+        </div>
+        <div class="zone-tile" data-zone="water">
+          <div class="zone-tile__name">Water</div>
+          <div class="zone-tile__count" id="zm-water">0</div>
+        </div>
+        <div class="zone-tile" data-zone="out_of_bounds">
+          <div class="zone-tile__name">OOB</div>
+          <div class="zone-tile__count" id="zm-oob">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---- SHOT HISTORY TABLE ---- -->
+    <section class="panel panel--history" aria-label="Shot History">
+      <div class="panel__header">
+        <span class="panel__title">Shot History</span>
+        <span class="panel__badge" id="history-count">0 shots</span>
+      </div>
+      <div class="table-wrap">
+        <table class="history-table" id="history-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Shot ID</th>
+              <th>Ball ID</th>
+              <th>Zone</th>
+              <th>Result</th>
+              <th>AI Conf.</th>
+              <th>Δ Score</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr class="history-empty-row">
+              <td colspan="8">No shots recorded yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================================================================
+       TOAST NOTIFICATIONS
+  ================================================================ -->
+  <div class="toast-container" id="toast-container" aria-live="assertive"></div>
+
+  <!-- ================================================================
+       SCRIPTS
+  ================================================================ -->
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
